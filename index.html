@@ -109,8 +109,14 @@
   .hero h1 .grad.ul::after{content:"";position:absolute;left:2px;right:2px;bottom:.04em;height:3px;border-radius:3px;background:var(--accent);opacity:.85}
   .hero p{color:var(--text-2);font-size:16px;max-width:560px;margin:0 auto;opacity:.85}
   :root[data-theme="light"] .hero p{color:#2A3B4A;opacity:.95;font-weight:500}
-  .stats{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:30px}
-  .stat{background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:16px 26px;min-width:120px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;justify-items:center;margin-top:30px;max-width:780px;margin-left:auto;margin-right:auto}
+  .stat{background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:16px 22px;min-width:120px;text-align:center;position:relative}
+  .stat .n{font-size:34px;font-weight:800;color:var(--accent);line-height:1.1}
+  .stat .l{font-size:12px;color:var(--text-3);margin-top:6px;letter-spacing:.2px}
+  .stat .rate{font-size:12px;font-weight:700;color:var(--accent);margin-top:4px;letter-spacing:.2px}
+  :root[data-theme="light"] .stat .rate{color:var(--accent)}
+  :root[data-theme="dark"] .stat .n{color:var(--accent-hi)}
+  :root[data-theme="dark"] .stat .rate{color:var(--accent-hi)}
   .stat .n{font-size:clamp(24px,3.5vw,30px);font-weight:800;color:var(--accent);line-height:1;font-variant-numeric:tabular-nums}
   .stat .l{font-size:12.5px;color:var(--text-3);margin-top:7px;letter-spacing:.5px}
 
@@ -316,17 +322,15 @@
   }
   :root[data-theme="dark"] .hero h1 .grad{background:transparent;-webkit-text-fill-color:initial;color:var(--accent-hi)}
   :root[data-theme="dark"] .hero p{font-size:17px;letter-spacing:.2px;max-width:520px;color:var(--text);opacity:.92;text-shadow:0 2px 18px rgba(0,0,0,.55)}
-  :root[data-theme="dark"] .stats{gap:18px;margin-top:38px}
+  :root[data-theme="dark"] .stats{gap:18px;margin-top:38px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));max-width:780px;margin-left:auto;margin-right:auto}
   :root[data-theme="dark"] .stat{
     background:var(--surface-2);
     border-color:rgba(255,255,255,.06);
     backdrop-filter:blur(14px);
     -webkit-backdrop-filter:blur(14px);
     border-radius:18px;
-    padding:18px 28px;
+    padding:16px 22px;
   }
-  :root[data-theme="dark"] .stat .n{font-weight:600;font-size:26px;letter-spacing:-.5px}
-  :root[data-theme="dark"] .stat .l{font-size:12px;letter-spacing:1px;text-transform:uppercase}
   :root[data-theme="dark"] .seg,
   :root[data-theme="dark"] .chip,
   :root[data-theme="dark"] .sel,
@@ -590,17 +594,18 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     const okCount = Object.values(prog).filter(v=>v==="ok").length;
     const rate = doneCount? Math.round(okCount/doneCount*100):0;
     const defs = [
-      ["题库总量", Q.length, null],
-      ["每日一题", dCount, null],
-      ["基础必刷", bCount, null],
-      ["已练习", doneCount+" 题"+(doneCount?` · 正确率 ${rate}%`:""), "done"],
-      ["错题", wrong.size, "wrong"]
+      ["题库总量", Q.length, "bank", "全部题库 · 点击进入刷题"],
+      ["每日一题", dCount, "daily", "每日一题 · 点击进入刷题"],
+      ["基础必刷", bCount, "bank", "基础必刷500题 · 点击进入刷题"],
+      ["已练习", doneCount, "done", "已练习 · 点击查看"],
+      ["错题", wrong.size, "wrong", "错题区 · 点击进入刷题"]
     ];
-    $("#stats").innerHTML = defs.map(([l,n,mod])=>`
-      <div class="stat ${mod?'clickable':''}" ${mod?`data-mod="${mod}"`:''}>
-        ${mod?`<span class="stat-go">👁</span>`:''}
+    $("#stats").innerHTML = defs.map(([l,n,mod,title])=>`
+      <div class="stat clickable" data-mod="${mod}" title="${title}">
+        <span class="stat-go">👁</span>
         <div class="n">${n}</div>
-        <div class="l">${l}${mod?' · 查看':''}</div>
+        ${mod==="done" && doneCount?`<div class="rate">正确率 ${rate}%</div>`:""}
+        <div class="l">${l}</div>
       </div>`).join("");
     $("#footTotal").textContent = Q.length;
     $("#favCount").textContent = fav.size;
@@ -609,10 +614,22 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     });
   }
 
-  // 点击统计块 -> 进入 已练习 / 错题 视图
+  // 点击统计块 -> 进入对应模块（刷题模式，已练习/错题特殊处理）
   function openModuleView(mod){
     $("#tabs").querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-    state.module=mod; state.view="browse"; state.subject="all"; state.lecture="all"; state.search="";
+    if(["daily","bank","wrong"].includes(mod)){
+      const tab=$(`#tabs .tab[data-mod="${mod}"]`);
+      if(tab) tab.classList.add("active");
+    }
+    state.subject="all"; state.lecture="all"; state.search="";
+    if(mod==="done"){
+      state.module="done"; state.view="browse";
+    } else if(mod==="wrong"){
+      state.module="wrong"; state.view="practice";
+    } else {
+      state.module=mod; state.view="practice";
+    }
+    startPractice();
     renderControls(); renderMain(); renderStats();
   }
 
@@ -973,12 +990,12 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     const list=Q.filter(q=>wrong.has(q.id));
     if(!list.length) return null;
     const head=el("div","wrong-head");
-    const reviewed=list.filter(q=>prog[q.id]).length;
-    const pct=Math.round(reviewed/list.length*100);
+    const mastered=list.filter(q=>prog[q.id]==="ok").length;
+    const pct=Math.round(mastered/list.length*100);
     const info=el("div","wh-info");
     info.innerHTML=`<div class="wh-title">错题集 · <b>${list.length}</b> 道</div>
       <div class="wh-bar"><div class="wh-fill" style="width:${pct}%"></div></div>
-      <div class="wh-sub">已复习 ${reviewed} / ${list.length}</div>`;
+      <div class="wh-sub">已掌握 ${mastered} / ${list.length} · 答对后自动移出错题集</div>`;
     head.appendChild(info);
     const clearBtn=el("button","btn ghost","🗑 清空错题");
     clearBtn.onclick=()=>{
@@ -1100,6 +1117,10 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
   // random one
   $("#randBtn").onclick=openRandom;
   $("#modal").onclick=(e)=>{ if(e.target===$("#modal")) closeRandom(); };
+
+  // hero buttons: 开始刷题 -> 基础必刷刷题，每日一题 -> 每日一题刷题
+  $("#heroStart").onclick=()=>openModuleView("bank");
+  $("#heroDaily").onclick=()=>openModuleView("daily");
 
   // ---------- theme ----------
   const themeBtn=$("#themeBtn");
