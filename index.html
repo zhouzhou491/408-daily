@@ -463,6 +463,8 @@
   .wh-sub{font-size:12px;color:var(--text-3);margin-top:6px;letter-spacing:.3px}
   .btn.ghost{background:transparent;border:1px solid var(--border-strong);color:var(--text-2)}
   .btn.ghost:hover{border-color:var(--wrong);color:var(--wrong)}
+  .reset-wrap{margin-left:auto;display:flex}
+  .reset-btn{padding:8px 14px;font-size:13px;font-weight:700}
 
   /* ===== 统计块可点击（进入 已练习 / 错题） ===== */
   .stat{position:relative}
@@ -599,7 +601,8 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
   // ---------- storage ----------
   const LS = {
     fav:"yt408_fav", prog:"yt408_prog", theme:"yt408_theme", view:"yt408_view", wrong:"yt408_wrong",
-    doneFrom:"yt408_done_from" // id -> 最后一次作答正确的来源模块（用于"错题区攻克"标注）
+    doneFrom:"yt408_done_from", // id -> 最后一次作答正确的来源模块（用于"错题区攻克"标注）
+    pos:"yt408_pos"            // module -> 该模块上次刷题停在的题号(索引)，用于"接着刷"
   };
   const read = (k,def)=>{ try{const v=localStorage.getItem(k);return v==null?def:JSON.parse(v);}catch(e){return def;} };
   const write = (k,v)=>{ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} };
@@ -608,6 +611,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
   let prog = read(LS.prog,{}); // id -> 'ok' | 'no'
   let wrong = new Set(read(LS.wrong,[]));
   let doneFrom = read(LS.doneFrom,{}); // id -> 'wrong' | 'daily' | 'bank' | ...
+  let pos = read(LS.pos,{}); // module -> pIdx（上次停在的题）
   const isWrong = id=>wrong.has(id);
 
   const state = {
@@ -669,9 +673,13 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
   }
 
   // 进入刷题：按当前筛选快照本组题目（错题区会冻结本场，过程中不再重建/移位）
-  function startPractice(){
+  // opts.restore=true 时跳到上次停在的题（进模块时触发）；否则从本组第 1 道开始
+  function startPractice(opts){
+    opts = opts||{};
     state.pList=filtered();
-    state.pIdx=0; state.revealed=false; state.selected=null;
+    if(opts.restore){ state.pIdx = pos[state.module]||0; }
+    else { state.pIdx = 0; }
+    state.revealed=false; state.selected=null;
     if(state.module==="wrong") state.wrongCelebrated=false;
   }
 
@@ -729,7 +737,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     } else {
       state.module=mod; state.view="practice";
     }
-    startPractice();
+    startPractice({restore:true}); // 进模块时跳到上次停在的题
     renderControls(); renderMain(); renderStats();
   }
 
@@ -786,6 +794,20 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     inp.oninput=()=>{ state.search=inp.value;
       if(state.view==="practice"){ startPractice(); }
       renderMain(); };
+
+    // 刷题模式：加上"从头开始"按钮（清空该模块进度位，重新从第 1 道刷）
+    if(state.view==="practice" && ["daily","bank","wrong"].includes(state.module)){
+      const resetWrap=el("div","reset-wrap");
+      const rb=el("button","btn ghost reset-btn","↺ 从头开始");
+      rb.title="清空本模块刷题进度，从第 1 道重新刷";
+      rb.onclick=()=>{
+        delete pos[state.module]; write(LS.pos,pos);
+        startPractice(); // 不带 restore，回到第 1 道
+        renderMain();
+      };
+      resetWrap.appendChild(rb);
+      c.appendChild(resetWrap);
+    }
   }
 
   function setSubject(k){
@@ -952,7 +974,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
       grow.appendChild(rev);
     }else{
       const again=el("button","btn accent","🔀 换一批/重做");
-      again.onclick=()=>{ if(state.module==="wrong") state.wrongCelebrated=false; startPractice(); renderMain(); };
+      again.onclick=()=>{ if(state.module==="wrong") state.wrongCelebrated=false; delete pos[state.module]; write(LS.pos,pos); startPractice(); renderMain(); };
       grow.appendChild(again);
     }
     nav.appendChild(prev); nav.appendChild(grow); nav.appendChild(next);
@@ -986,6 +1008,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     }
     write(LS.wrong,[...wrong]);
     state.revealed=true;
+    pos[state.module]=state.pIdx; write(LS.pos,pos); // 记录停在哪（已作答的这题）
     renderStats();
     renderControls();
     let celebrated=false;
@@ -1012,6 +1035,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     const ni=state.pIdx+dir;
     if(ni<0||ni>=list.length) return;
     state.pIdx=ni; state.revealed=false; state.selected=null;
+    pos[state.module]=state.pIdx; write(LS.pos,pos); // 记录停在哪
     renderMain();
     const pc=$("#pcard");
     if(pc){ pc.classList.add(dir>0?"slide-next":"slide-prev"); }
