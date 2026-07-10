@@ -379,6 +379,41 @@
     color:var(--text-2);
   }
   :root[data-theme="dark"] .icon-btn:hover{background:rgba(255,255,255,.10);color:var(--text)}
+
+  /* ===== 错题区 header：清空按钮 + 进度条 ===== */
+  .wrong-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px;
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 18px;
+    box-shadow:var(--shadow)}
+  .wh-info{flex:1;min-width:200px}
+  .wh-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px}
+  .wh-bar{height:8px;border-radius:6px;background:var(--surface-3);overflow:hidden}
+  .wh-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--accent-hi));transition:width .5s var(--ease-out)}
+  .wh-sub{font-size:12px;color:var(--text-3);margin-top:6px;letter-spacing:.3px}
+  .btn.ghost{background:transparent;border:1px solid var(--border-strong);color:var(--text-2)}
+  .btn.ghost:hover{border-color:var(--wrong);color:var(--wrong)}
+
+  /* ===== 通关 / 清空 庆祝弹层 ===== */
+  .celebrate{position:fixed;inset:0;z-index:140;display:flex;align-items:center;justify-content:center;
+    background:rgba(2,4,10,.55);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+    opacity:0;pointer-events:none;transition:opacity .3s ease}
+  .celebrate.show{opacity:1;pointer-events:auto}
+  .cmodal{position:relative;background:var(--surface);border:1px solid var(--border-strong);border-radius:22px;
+    padding:42px 50px;text-align:center;box-shadow:var(--shadow-hover);max-width:92vw;
+    transform:scale(.82);transition:transform .4s cubic-bezier(.16,1,.3,1)}
+  .celebrate.show .cmodal{transform:scale(1)}
+  .cemoji{font-size:68px;line-height:1;animation:cepop .6s cubic-bezier(.16,1,.3,1) both;
+    filter:drop-shadow(0 6px 18px rgba(91,163,232,.35))}
+  @keyframes cepop{0%{transform:scale(0) rotate(-18deg);opacity:0}60%{transform:scale(1.28)}100%{transform:scale(1)}}
+  .ctitle{font-size:27px;font-weight:800;margin-top:16px;color:var(--text);letter-spacing:1px}
+  .csub{font-size:15px;color:var(--text-2);margin-top:9px}
+  #ceClose{margin-top:24px}
+  .confetti{position:absolute;top:-12%;width:9px;height:14px;border-radius:2px;opacity:.95;pointer-events:none}
+  .confetti.c1{left:18%;background:#5BA3E8;animation:cfall 2.4s linear infinite}
+  .confetti.c2{left:46%;background:#34D399;animation:cfall 2.9s linear infinite .5s}
+  .confetti.c3{left:70%;background:#FBBF24;animation:cfall 2.1s linear infinite .9s}
+  .confetti.c4{left:84%;background:#F472B6;animation:cfall 2.6s linear infinite .3s}
+  .confetti.c5{left:32%;background:#A78BFA;animation:cfall 3.1s linear infinite .7s}
+  @keyframes cfall{to{transform:translateY(112vh) rotate(540deg)}}
 </style>
 </head>
 <body>
@@ -394,8 +429,8 @@
       <nav class="tabs" id="tabs">
         <button class="tab active" data-mod="daily"><svg class="tic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="12" cy="14.6" r="1.4" fill="currentColor" stroke="none"/></svg>每日一题</button>
         <button class="tab" data-mod="bank"><svg class="tic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5A2 2 0 0 1 6 5h12a2 2 0 0 1 2 1.5V18a2 2 0 0 0-2-1.5H6A2 2 0 0 0 4 18z"/><path d="M4 10.5A2 2 0 0 1 6 9h12a2 2 0 0 1 2 1.5"/><path d="M4 14.5A2 2 0 0 1 6 13h12a2 2 0 0 1 2 1.5"/></svg>基础必刷500题</button>
-        <button class="tab" data-mod="wrong"><svg class="tic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><line x1="9" y1="9" x2="10" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>错题区</button>
         <button class="tab" data-mod="real"><svg class="tic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.6"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></svg>真题选择题</button>
+        <button class="tab" data-mod="wrong"><svg class="tic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><line x1="9" y1="9" x2="10" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>错题区</button>
       </nav>
       <div class="spacer"></div>
       <button class="icon-btn" id="randBtn" title="随机一题">🔀</button>
@@ -760,10 +795,17 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     state.revealed=true;
     renderStats();
     renderControls();
-    // 错题区刷对了，当前题目可能从列表移除，重新计算 pList 与 pIdx
+    let celebrated=false;
+    // 错题区：刷对了当前题，可能从列表移除
     if(state.module==="wrong" && isOk){
+      if(wrong.size===0){ celebrated=true; celebrate("🎉","错题清空！","你已掌握全部错题，太强了"); }
       state.pList = filtered();
       if(state.pIdx >= state.pList.length) state.pIdx = Math.max(0, state.pList.length-1);
+    }
+    // 通关：非错题区、且揭晓的是本组最后一道
+    if(!celebrated && state.module!=="wrong" && state.pList.length && state.pIdx===state.pList.length-1){
+      celebrated=true;
+      celebrate("🏆","恭喜通关！","你已完成本组全部 "+state.pList.length+" 道题目");
     }
     renderMain();
   }
@@ -864,9 +906,42 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
       wrap.appendChild(el("div","fav-empty",`<div class="big">📝</div><div>还没有错题。<br>刷题时答错的题目会自动出现在这里～</div>`));
       m.appendChild(wrap); return;
     }
+    // header: progress + clear button
+    const head=el("div","wrong-head");
+    const reviewed=list.filter(q=>prog[q.id]).length;
+    const pct=Math.round(reviewed/list.length*100);
+    const info=el("div","wh-info");
+    info.innerHTML=`<div class="wh-title">错题集 · <b>${list.length}</b> 道</div>
+      <div class="wh-bar"><div class="wh-fill" style="width:${pct}%"></div></div>
+      <div class="wh-sub">已复习 ${reviewed} / ${list.length}</div>`;
+    head.appendChild(info);
+    const clearBtn=el("button","btn ghost","🗑 清空错题");
+    clearBtn.onclick=()=>{
+      if(confirm("确定清空所有错题？（不可撤销）")){
+        wrong.clear(); write(LS.wrong,[]);
+        renderStats(); renderControls(); renderMain();
+      }
+    };
+    head.appendChild(clearBtn);
+    wrap.appendChild(head);
     list.forEach((q,i)=>wrap.appendChild(card(q,i)));
     m.appendChild(wrap);
     observeCards();
+  }
+
+  // ---------- CELEBRATE overlay ----------
+  function celebrate(emoji,title,sub){
+    let ov=$("#celebrate");
+    if(!ov){ ov=el("div","celebrate"); ov.id="celebrate"; document.body.appendChild(ov); }
+    ov.innerHTML=`<span class="confetti c1"></span><span class="confetti c2"></span><span class="confetti c3"></span><span class="confetti c4"></span><span class="confetti c5"></span>
+      <div class="cmodal">
+        <div class="cemoji">${emoji}</div>
+        <div class="ctitle">${title}</div>
+        <div class="csub">${sub}</div>
+        <button class="btn primary" id="ceClose">继续刷题 →</button>
+      </div>`;
+    ov.classList.add("show");
+    $("#ceClose").onclick=()=>ov.classList.remove("show");
   }
 
   // ---------- REAL (placeholder) ----------
