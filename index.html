@@ -71,7 +71,7 @@
     border-bottom-color:rgba(255,255,255,.08);color:var(--text)}
   :root[data-theme="light"] .top{background:rgba(255,255,255,.78);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
     border-bottom-color:var(--border);color:var(--text)}
-  :root[data-theme="light"] .tab{color:var(--text-3)}
+  :root[data-theme="light"] .tab{color:var(--text-2)}
   :root[data-theme="light"] .tab:hover{color:var(--text)}
   :root[data-theme="light"] .icon-btn{background:var(--surface-3);color:var(--text);border-color:var(--border)}
   :root[data-theme="light"] .brand{color:var(--text)}
@@ -82,7 +82,7 @@
     background:var(--surface); border-bottom:1px solid rgba(255,255,255,.08);
     color:#F8FAFC;}
   .top-inner{display:flex;align-items:center;gap:18px;height:62px;max-width:1080px;margin:0 auto;padding:0 22px}
-  .brand{display:flex;flex-direction:column;line-height:1.12;white-space:nowrap;color:var(--text);margin-left:10px}
+  .brand{display:flex;flex-direction:column;align-items:center;line-height:1.12;white-space:nowrap;color:var(--text);margin-left:10px}
   .brand-main{font-weight:800;font-size:19px;letter-spacing:1px;line-height:1.1}
   .brand-sub{font-size:11px;font-weight:500;color:var(--text-3);letter-spacing:1.5px;margin-top:2px}
   :root[data-theme="light"] .brand-sub{color:#4A6F84}
@@ -315,7 +315,7 @@
     background-clip:text;
   }
   :root[data-theme="dark"] .hero h1 .grad{background:transparent;-webkit-text-fill-color:initial;color:var(--accent-hi)}
-  :root[data-theme="dark"] .hero p{font-size:17px;letter-spacing:.2px;max-width:520px;opacity:.75}
+  :root[data-theme="dark"] .hero p{font-size:17px;letter-spacing:.2px;max-width:520px;color:var(--text);opacity:.92;text-shadow:0 2px 18px rgba(0,0,0,.55)}
   :root[data-theme="dark"] .stats{gap:18px;margin-top:38px}
   :root[data-theme="dark"] .stat{
     background:var(--surface-2);
@@ -397,7 +397,7 @@
         <button class="tab" data-mod="real"><svg class="tic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.6"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></svg>真题选择题</button>
       </nav>
       <div class="spacer"></div>
-      <button class="icon-btn" id="randBtn" title="随机一题">🎲</button>
+      <button class="icon-btn" id="randBtn" title="随机一题">🔀</button>
       <button class="icon-btn fav-btn" id="favBtn" title="我的收藏">★<span class="fav-count" id="favCount">0</span></button>
       <button class="icon-btn" id="themeBtn" title="切换深/浅色">🌙</button>
     </div>
@@ -721,7 +721,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
       rev.style.width="100%"; rev.onclick=reveal;
       grow.appendChild(rev);
     }else{
-      const again=el("button","btn accent","🎲 换一批/重做");
+      const again=el("button","btn accent","🔀 换一批/重做");
       again.onclick=()=>{ state.pIdx=0;state.revealed=false;state.selected=null; renderMain(); };
       grow.appendChild(again);
     }
@@ -787,7 +787,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
       <div class="stem">${esc(q.stem)}</div>
       <div class="r-opts" id="rOpts"></div>
       <div class="r-result" id="rResult"></div>
-      <div class="card-actions"><button class="btn" id="rNext">🎲 换一题</button></div>`;
+      <div class="card-actions"><button class="btn" id="rNext">🔀 换一题</button></div>`;
     const ro=$("#rOpts",m);
     Object.keys(q.options||{}).sort().forEach(k=>{
       const o=el("div","r-opt"); o.dataset.k=k;
