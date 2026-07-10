@@ -625,7 +625,17 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     m.innerHTML="";
     if(state.module==="real"){ m.appendChild(renderReal()); return; }
     if(state.module==="fav"){ renderFav(m); return; }
-    if(state.module==="wrong"){ renderWrong(m); return; }
+    if(state.module==="wrong"){
+      if(state.view==="practice"){
+        state.pList = filtered();
+        if(state.pIdx >= state.pList.length) state.pIdx = Math.max(0, state.pList.length-1);
+        const head=wrongHeadEl();
+        if(head) m.appendChild(head);
+        renderPractice(m);
+        return;
+      }
+      renderWrong(m); return;
+    }
     if(state.view==="practice"){ renderPractice(m); return; }
     renderBrowse(m);
   }
@@ -899,14 +909,9 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
   }
 
   // ---------- WRONG ZONE ----------
-  function renderWrong(m){
+  function wrongHeadEl(){
     const list=Q.filter(q=>wrong.has(q.id));
-    const wrap=el("div","list");
-    if(!list.length){
-      wrap.appendChild(el("div","fav-empty",`<div class="big">📝</div><div>还没有错题。<br>刷题时答错的题目会自动出现在这里～</div>`));
-      m.appendChild(wrap); return;
-    }
-    // header: progress + clear button
+    if(!list.length) return null;
     const head=el("div","wrong-head");
     const reviewed=list.filter(q=>prog[q.id]).length;
     const pct=Math.round(reviewed/list.length*100);
@@ -923,7 +928,18 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
       }
     };
     head.appendChild(clearBtn);
-    wrap.appendChild(head);
+    return head;
+  }
+
+  function renderWrong(m){
+    const list=Q.filter(q=>wrong.has(q.id));
+    const wrap=el("div","list");
+    if(!list.length){
+      wrap.appendChild(el("div","fav-empty",`<div class="big">📝</div><div>还没有错题。<br>刷题时答错的题目会自动出现在这里～</div>`));
+      m.appendChild(wrap); return;
+    }
+    const head=wrongHeadEl();
+    if(head) wrap.appendChild(head);
     list.forEach((q,i)=>wrap.appendChild(card(q,i)));
     m.appendChild(wrap);
     observeCards();
