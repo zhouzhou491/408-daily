@@ -165,6 +165,15 @@
   .b-lect{background:var(--accent-soft);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent-hi) 30%,transparent)}
   .b-date{background:var(--surface-3);color:var(--text-3);border:1px solid var(--border)}
   .b-zone{background:rgba(124,92,255,.12);color:#6d4aff;border:1px solid rgba(124,92,255,.38)}
+  /* 收藏区：按科目分组的标题 */
+  .fav-group{display:flex;align-items:center;gap:9px;margin:20px 2px 11px;padding-left:13px;
+    border-left:3px solid var(--accent);font-weight:700;color:var(--text);font-size:15px}
+  .fav-group:first-child{margin-top:6px}
+  .fg-dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .fg-ds{background:#3B6F8F}.fg-co{background:#C2773F}.fg-os{background:#5B8C5A}.fg-cn{background:#9A5CB0}
+  .fg-name{flex:1}
+  .fg-cnt{font-size:12px;font-weight:600;color:var(--text-3);background:var(--surface-3);
+    border:1px solid var(--border);border-radius:999px;padding:1px 10px}
   .zone-label{font-size:11.5px;font-weight:700;color:var(--text-3);margin-right:2px}
   .b-num{color:var(--text-3);font-size:12.5px;font-weight:600}
   .fav-star{background:var(--surface-3);border:1px solid var(--border);width:30px;height:30px;border-radius:9px;
@@ -905,7 +914,6 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     c.dataset.id=q.id;
     const head=el("div","card-head");
     head.innerHTML = `<div class="head-badges">`
-      + badge("b-subj",q.subjectName)
       + badge("b-zone",zoneName(q.source))
       + (q.lecture?badge("b-lect",q.lecture):"")
       + (q.date?badge("b-date",q.date):"")
@@ -972,7 +980,6 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     const pc=el("div","pcard"); pc.id="pcard";
     const head=el("div","card-head");
     head.innerHTML = `<div class="head-badges">`
-      + badge("b-subj",q.subjectName)
       + badge("b-zone",zoneName(q.source))
       + (q.lecture?badge("b-lect",q.lecture):"")
       + (q.date?badge("b-date",q.date):"")
@@ -1123,7 +1130,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     const favOn=isFav(q.id);
     m.innerHTML=`<button class="modal-close" id="modalClose">✕</button>
       <div class="card-head">
-        <div class="head-badges">${badge("b-subj",q.subjectName)}${badge("b-zone",zoneName(q.source))}${q.lecture?badge("b-lect",q.lecture):""}${q.date?badge("b-date",q.date):""}</div>
+        <div class="head-badges">${badge("b-zone",zoneName(q.source))}${q.lecture?badge("b-lect",q.lecture):""}${q.date?badge("b-date",q.date):""}</div>
         <div class="head-meta"><span class="b-num">No.${q.num}</span><button class="fav-star${favOn?" on":""}" id="rFav">${favOn?"★":"☆"}</button></div>
       </div>
       <div class="stem">${esc(q.stem)}</div>
@@ -1171,15 +1178,26 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
 
   // ---------- FAV ----------
   function renderFav(m){
-    let list=Q.filter(q=>fav.has(q.id));
-    if(state.subject!=="all") list=list.filter(q=>q.subject===state.subject);
-    if(state.zone!=="all") list=list.filter(q=>q.source===state.zone);
+    let base=Q.filter(q=>fav.has(q.id));
+    if(state.zone!=="all") base=base.filter(q=>q.source===state.zone);
     const wrap=el("div","list");
-    if(!list.length){
+    if(!base.length){
       wrap.appendChild(el("div","fav-empty",`<div class="big">⭐</div><div>还没有收藏的题目。<br>在任意题目卡片右上角点 ☆ 即可加入收藏～</div>`));
       m.appendChild(wrap); return;
     }
-    list.forEach((q,i)=>wrap.appendChild(card(q,i)));
+    if(state.subject==="all"){
+      // 未指定科目：按科目分组，分组标题即“科目区分”，无需在每张卡片前重复标注
+      SUBJ.forEach(s=>{
+        const items=base.filter(q=>q.subject===s.key);
+        if(!items.length) return;
+        const h=el("div","fav-group");
+        h.innerHTML=`<span class="fg-dot fg-${s.key}"></span><span class="fg-name">${s.name}</span><span class="fg-cnt">${items.length}</span>`;
+        wrap.appendChild(h);
+        items.forEach((q,i)=>wrap.appendChild(card(q,i)));
+      });
+    } else {
+      base.filter(q=>q.subject===state.subject).forEach((q,i)=>wrap.appendChild(card(q,i)));
+    }
     m.appendChild(wrap);
     observeCards();
   }
