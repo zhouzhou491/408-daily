@@ -688,6 +688,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     search:"",
     pIdx:0,
     pList:[],
+    pListModule:null,   // 当前 pList 所属模块，用于在跨模块切换时安全重建
     revealed:false,
     selected:null,
     wrongCelebrated:false   // 错题区：本场是否已达全部答对（避免重复弹恭喜）
@@ -750,6 +751,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
       if(state.module==="daily" && q.source!=="daily") return false;
       if(state.module==="bank" && q.source!=="bank500") return false;
       if(state.module==="wrong" && !wrong.has(q.id)) return false;
+      if(state.module==="fav" && !fav.has(q.id)) return false;
       if(state.module==="done" && !prog[q.id]) return false;
       if(state.module==="wrong" && state.zone!=="all" && q.source!==state.zone) return false;
       if(state.subject!=="all" && q.subject!==state.subject) return false;
@@ -767,6 +769,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
   function startPractice(opts){
     opts = opts||{};
     state.pList=filtered();
+    state.pListModule=state.module;
     if(opts.restore){ state.pIdx = pos[state.module]||0; }
     else { state.pIdx = 0; }
     state.revealed=false; state.selected=null;
@@ -920,7 +923,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
       renderMain(); };
 
     // 刷题模式：加上"从头开始"按钮（清空该模块进度位，重新从第 1 道刷）
-    if(state.view==="practice" && ["daily","bank","wrong"].includes(state.module)){
+    if(state.view==="practice" && ["daily","bank","wrong","fav"].includes(state.module)){
       const resetWrap=el("div","reset-wrap");
       const rb=el("button","btn ghost reset-btn","↺ 从头开始");
       rb.title="清空本模块刷题进度，从第 1 道重新刷";
@@ -953,12 +956,20 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     const m=$("#main");
     m.innerHTML="";
     if(state.module==="real"){ m.appendChild(renderReal()); return; }
-    if(state.module==="fav"){ renderFav(m); return; }
+    if(state.module==="fav"){
+      if(state.view==="practice"){
+        // 收藏区刷题：跨模块切换后若 pList 不属于 fav 则重建，保证本场是收藏题目
+        if(!state.pList.length || state.pListModule!=="fav"){ state.pList=filtered(); state.pListModule="fav"; }
+        if(state.pIdx>=state.pList.length) state.pIdx=Math.max(0,state.pList.length-1);
+        renderPractice(m); return;
+      }
+      renderFav(m); return;
+    }
     if(state.module==="done"){ renderDone(m); return; }
     if(state.module==="wrong"){
       if(state.view==="practice"){
         // 关键：错题区刷题冻结本场列表，不再在此重建/移位，避免"题干与答案错位"
-        if(!state.pList.length){ state.pList=filtered(); }
+        if(!state.pList.length || state.pListModule!=="wrong"){ state.pList=filtered(); state.pListModule="wrong"; }
         if(state.pIdx >= state.pList.length) state.pIdx = Math.max(0, state.pList.length-1);
         const head=wrongHeadEl();
         if(head) m.appendChild(head);
