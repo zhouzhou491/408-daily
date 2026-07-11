@@ -123,6 +123,10 @@
   /* ============ CONTROLS ============ */
   .controls{position:sticky;top:62px;z-index:30;display:flex;flex-wrap:wrap;gap:12px;align-items:center;
     padding:14px 0;margin-bottom:8px}
+  .mod-title{width:100%;margin-bottom:4px}
+  .mod-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 12px;
+    border-radius:999px;background:var(--accent-soft);color:var(--accent);
+    border:1px solid color-mix(in srgb,var(--accent-hi) 30%,transparent);letter-spacing:.3px}
   .seg{display:flex;background:var(--surface-light);border:1px solid var(--border);border-radius:12px;padding:4px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
   .seg button{appearance:none;border:0;background:transparent;color:var(--text-2);font:inherit;font-weight:600;font-size:13px;
     padding:7px 14px;border-radius:9px;cursor:pointer;transition:.25s;display:flex;align-items:center;gap:6px}
@@ -617,6 +621,8 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
   ];
   const SUBJ_NAME_TO_KEY = {}; SUBJ.forEach(s=>SUBJ_NAME_TO_KEY[s.name]=s.key);
   const SUBJ_KEY_TO_NAME = {}; SUBJ.forEach(s=>SUBJ_KEY_TO_NAME[s.key]=s.name);
+  // 模块 -> 显示名称
+  const MODULE_NAME = {daily:"每日一题", bank:"基础必刷500题", wrong:"错题区", done:"已练习", fav:"我的收藏", real:"真题选择"};
   // lecture(章节名) -> 所属科目 key，用于在“全部科目”下区分同名章节
   const LECT_SUBJ = {};
   Q.forEach(q=>{ if(q.lecture && !LECT_SUBJ[q.lecture]) LECT_SUBJ[q.lecture]=q.subject; });
@@ -677,7 +683,10 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
   // 切换科目/区域后，滚动到筛选区顶部（而非页面绝对顶部），让 controls 正好露在导航下方
   function scrollToControls(){
     const c=$("#controls");
-    if(c) window.scrollTo({top:Math.max(0,c.offsetTop-66),left:0,behavior:"smooth"});
+    if(!c) return;
+    const rect = c.getBoundingClientRect();
+    const top = window.scrollY + rect.top - 66;
+    window.scrollTo({top:Math.max(0,top),left:0,behavior:"smooth"});
   }
 
   function chapterNum(s){
@@ -794,6 +803,10 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     const c = $("#controls");
     c.innerHTML="";
     if(state.module==="real"){ return; }
+
+    // 当前模块标识：让用户在 controls 区域也能一眼知道自己在哪个模块
+    const modName = MODULE_NAME[state.module] || state.module;
+    c.appendChild(el("div","mod-title",`<span class="mod-pill">${esc(modName)}</span>`));
 
     // view segmented（已练习模块仅浏览，不显示刷题切换）
     if(state.module!=="done"){
