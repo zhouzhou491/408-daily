@@ -121,7 +121,7 @@
   :root[data-theme="dark"] .stat .rate{color:var(--accent-hi)}
 
   /* ============ CONTROLS ============ */
-  .controls{position:sticky;top:62px;z-index:30;display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+  .controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;
     padding:14px 0;margin-bottom:8px}
   .mod-title{width:100%;margin-bottom:4px}
   .mod-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 12px;
@@ -682,20 +682,13 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
   const isFav = id=>fav.has(id);
   const badge = (cls,txt)=>`<span class="badge ${cls}">${esc(txt)}</span>`;
   const normAns = a=> Array.isArray(a)? a : (a==null? [] : [a]);
-  // 元素在文档中的绝对 offsetTop（递归处理 position:relative 祖先）
-  function absoluteOffsetTop(el){
-    let top = 0;
-    while(el){
-      top += el.offsetTop;
-      el = el.offsetParent;
-    }
-    return top;
-  }
   // 切换科目/区域后，滚动到筛选区顶部（而非页面绝对顶部），让 controls 正好露在导航下方
   function scrollToControls(){
     const c=$("#controls");
     if(!c) return;
-    window.scrollTo({top:Math.max(0,absoluteOffsetTop(c)-66),left:0,behavior:"smooth"});
+    const rect=c.getBoundingClientRect();
+    const top=rect.top + window.scrollY - 66;
+    window.scrollTo({top:Math.max(0,top),left:0,behavior:"smooth"});
   }
 
   function chapterNum(s){
