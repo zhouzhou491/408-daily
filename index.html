@@ -201,6 +201,10 @@
   .analysis.open{max-height:600px;opacity:1;margin-top:16px}
   .analysis .ttl{font-size:12.5px;font-weight:800;letter-spacing:1px;color:var(--accent-hi);margin-bottom:7px}
   .analysis .body{font-size:14.5px;color:var(--text-2);line-height:1.8;white-space:pre-wrap}
+  .vnote{margin-top:12px;padding:10px 13px;border-radius:12px;font-size:13.5px;line-height:1.6;
+    background:var(--accent-soft);border:1px solid var(--border);color:var(--text-2)}
+  .vnote b{color:var(--accent);font-weight:800}
+  .vnote .vnote-tip{color:var(--text-3);font-size:12.5px;margin-left:2px}
   .kp-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
   .kp{font-size:11.5px;color:var(--text-2);background:var(--surface-3);border:1px solid var(--border);padding:3px 10px;border-radius:999px}
   .card-actions{display:flex;gap:10px;margin-top:16px}
@@ -685,6 +689,13 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
   const isFav = id=>fav.has(id);
   const badge = (cls,txt)=>`<span class="badge ${cls}">${esc(txt)}</span>`;
   const normAns = a=> Array.isArray(a)? a : (a==null? [] : [a]);
+  // 每日一题：在解析区标注课程视频讲解位置（源文档已标注，计组最后一题除外）
+  const videoNoteHtml = q=>{
+    if(q.source!=="daily") return "";
+    const v=q.video; if(!v) return "";
+    const pos = v.includes("|") ? v.split("|")[0] : v;
+    return `<div class="vnote">📺 视频位置：<b>${esc(pos)}</b><span class="vnote-tip">（讲解视频详情见右下角）</span></div>`;
+  };
   // 切换科目/区域后，滚动到筛选区顶部（而非页面绝对顶部），让 controls 正好露在导航下方
   function scrollToControls(){
     const c=$("#controls");
@@ -977,6 +988,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     const ans=el("div","analysis");
     const ansTxt=normAns(q.answer).join("、");
     ans.innerHTML=`<div class="ttl">✓ 正确答案：${esc(ansTxt)}</div><div class="body">${esc(q.analysis||"（暂无解析）")}</div>`
+      + videoNoteHtml(q)
       + (q.kps&&q.kps.length?`<div class="kp-row">${q.kps.map(k=>`<span class="kp">${esc(k)}</span>`).join("")}</div>`:"");
     c.appendChild(ans);
 
@@ -1061,6 +1073,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
       const block=el("div");
       block.innerHTML=`<div class="ttl" style="font-size:12.5px;font-weight:800;letter-spacing:1px;color:var(--accent);margin-bottom:7px">✓ 正确答案：${esc(ansTxt)}</div>
         <div class="body" style="font-size:14.5px;color:var(--text-2);line-height:1.8;white-space:pre-wrap">${esc(q.analysis||"（暂无解析）")}</div>`
+        + videoNoteHtml(q)
         + (q.kps&&q.kps.length?`<div class="kp-row">${q.kps.map(k=>`<span class="kp">${esc(k)}</span>`).join("")}</div>`:"");
       res.appendChild(block);
     }
@@ -1223,6 +1236,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
       res.innerHTML=`<div class="verdict ${isOk?"ok":"no"}" style="margin-bottom:12px">${isOk?"🎉 回答正确":"✗ 回答错误"}</div>
         <div class="ttl" style="font-size:12.5px;font-weight:800;letter-spacing:1px;color:var(--accent);margin-bottom:7px">✓ 正确答案：${esc(correct.join("、"))}</div>
         <div class="body" style="font-size:14.5px;color:var(--text-2);line-height:1.8;white-space:pre-wrap">${esc(q.analysis||"（暂无解析）")}</div>`
+        + videoNoteHtml(q)
         + (q.kps&&q.kps.length?`<div class="kp-row">${q.kps.map(k=>'<span class="kp">'+esc(k)+'</span>').join("")}</div>`:"");
       res.classList.add("open");
     }else{
