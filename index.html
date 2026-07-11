@@ -128,6 +128,7 @@
     padding:7px 14px;border-radius:9px;cursor:pointer;transition:.25s;display:flex;align-items:center;gap:6px}
   .seg button.on{color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent-hi) 45%,transparent)}
   .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .zone-chips{margin-top:-2px}
   .chip{appearance:none;border:1px solid var(--border);background:var(--surface-light);color:var(--text-2);font:inherit;font-weight:600;
     font-size:13px;padding:8px 15px;border-radius:999px;cursor:pointer;transition:.25s;box-shadow:0 1px 2px rgba(15,23,42,.04)}
   .chip:hover{color:var(--text);border-color:var(--accent-hi);transform:translateY(-1px)}
@@ -163,6 +164,8 @@
   .b-subj{background:var(--surface-3);color:var(--text-2);border:1px solid var(--border)}
   .b-lect{background:var(--accent-soft);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent-hi) 30%,transparent)}
   .b-date{background:var(--surface-3);color:var(--text-3);border:1px solid var(--border)}
+  .b-zone{background:rgba(124,92,255,.12);color:#6d4aff;border:1px solid rgba(124,92,255,.38)}
+  .zone-label{font-size:11.5px;font-weight:700;color:var(--text-3);margin-right:2px}
   .b-num{color:var(--text-3);font-size:12.5px;font-weight:600}
   .fav-star{background:var(--surface-3);border:1px solid var(--border);width:30px;height:30px;border-radius:9px;
     cursor:pointer;display:grid;place-items:center;font-size:15px;color:var(--text-3);transition:.2s}
@@ -415,6 +418,7 @@
     -webkit-backdrop-filter:blur(18px);
   }
   :root[data-theme="dark"] .card:hover{box-shadow:0 12px 48px rgba(0,0,0,.5),0 0 0 1px rgba(215,137,93,.12)}
+  :root[data-theme="dark"] .b-zone{background:rgba(124,92,255,.22);color:#b9a6ff;border-color:rgba(124,92,255,.48)}
   :root[data-theme="dark"] .btn{
     background:var(--surface-2);
     border-color:rgba(255,255,255,.10);
@@ -603,6 +607,18 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
   // lecture(章节名) -> 所属科目 key，用于在“全部科目”下区分同名章节
   const LECT_SUBJ = {};
   Q.forEach(q=>{ if(q.lecture && !LECT_SUBJ[q.lecture]) LECT_SUBJ[q.lecture]=q.subject; });
+  // source(来源) -> 区域标签：用于卡片/收藏区显示“题目归属哪个区”
+  const ZONE = [
+    {key:"daily",   name:"每日一题区"},
+    {key:"bank500", name:"基础必刷500题区"},
+    {key:"real",    name:"真题区"}
+  ];
+  const ZONE_KEY_TO_NAME = {}; ZONE.forEach(z=>ZONE_KEY_TO_NAME[z.key]=z.name);
+  const zoneName = src => ZONE_KEY_TO_NAME[src] || src || "未分区";
+  // 收藏区：是否在集合内的题（按 fav 集合）
+  const inFav = q => fav.has(q.id);
+  // 收藏区：按来源区域统计收藏数
+  const favSizeByZone = zoneKey => Q.filter(q=>fav.has(q.id)&&q.source===zoneKey).length;
 
   // ---------- storage ----------
   const LS = {
@@ -625,6 +641,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     view:"browse",    // browse | practice
     subject:"all",
     lecture:"all",
+    zone:"all",       // all | daily | bank500 | real（收藏区按来源区域筛选）
     search:"",
     pIdx:0,
     pList:[],
@@ -655,6 +672,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
       if(module==="bank" && q.source!=="bank500") return;
       if(module==="wrong" && !wrong.has(q.id)) return;
       if(module==="done" && !prog[q.id]) return;
+      if(module==="fav" && !fav.has(q.id)) return;
       if(subjKey!=="all" && q.subject!==subjKey) return;
       if(q.lecture && !out.includes(q.lecture)) out.push(q.lecture);
     });
@@ -773,7 +791,11 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     allChip.onclick=()=>setSubject("all");
     chips.appendChild(allChip);
     SUBJ.forEach(s=>{
-      const inModule = state.module==="daily"?q=>q.source==="daily":state.module==="wrong"?q=>wrong.has(q.id):state.module==="done"?q=>!!prog[q.id]:q=>q.source==="bank500";
+      const inModule = state.module==="daily"?q=>q.source==="daily"
+        : state.module==="wrong"?q=>wrong.has(q.id)
+        : state.module==="done"?q=>!!prog[q.id]
+        : state.module==="fav"?q=>fav.has(q.id)
+        : q=>q.source==="bank500";
       const n=Q.filter(q=>inModule(q)&&q.subject===s.key).length;
       if(!n) return;
       const b=el("button","chip"+(state.subject===s.key?" on":""),s.name.replace("计算机组成与系统结构","计组").replace("操作系统","操作系统"));
@@ -781,6 +803,22 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
       chips.appendChild(b);
     });
     c.appendChild(chips);
+
+    // 收藏区：额外提供“来源区域”筛选（每日一题区 / 基础必刷500题区 / 真题区）
+    if(state.module==="fav"){
+      const zc=el("div","chips zone-chips");
+      const zall=el("button","chip"+(state.zone==="all"?" on":""),"全部区域");
+      zall.onclick=()=>setZone("all");
+      zc.appendChild(zall);
+      ZONE.forEach(z=>{
+        const n=favSizeByZone(z.key);
+        if(!n) return;
+        const b=el("button","chip"+(state.zone===z.key?" on":""),z.name);
+        b.onclick=()=>setZone(z.key);
+        zc.appendChild(b);
+      });
+      c.appendChild(zc);
+    }
 
     // lecture select
     const lects = lecturesFor(state.subject, state.module);
@@ -824,6 +862,11 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     renderControls(); renderMain();
   }
 
+  function setZone(k){
+    state.zone=k;
+    renderControls(); renderMain();
+  }
+
   // ---------- render: main ----------
   function renderMain(){
     const m=$("#main");
@@ -863,6 +906,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     const head=el("div","card-head");
     head.innerHTML = `<div class="head-badges">`
       + badge("b-subj",q.subjectName)
+      + badge("b-zone",zoneName(q.source))
       + (q.lecture?badge("b-lect",q.lecture):"")
       + (q.date?badge("b-date",q.date):"")
       + `</div><div class="head-meta"><span class="b-num">No.${q.num}</span></div>`;
@@ -929,6 +973,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     const head=el("div","card-head");
     head.innerHTML = `<div class="head-badges">`
       + badge("b-subj",q.subjectName)
+      + badge("b-zone",zoneName(q.source))
       + (q.lecture?badge("b-lect",q.lecture):"")
       + (q.date?badge("b-date",q.date):"")
       + `</div><div class="head-meta"><span class="b-num">No.${q.num}</span></div>`;
@@ -1053,8 +1098,18 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
 
   // ---------- RANDOM ONE ----------
   let randState={q:null,selected:null,revealed:false};
+  // 随机抽取：错题权重调高（约70%），但保留约30%从非错题抽取，保证“不全是错题”
+  function pickRandomQuestion(){
+    const wrongList=Q.filter(q=>wrong.has(q.id));
+    if(wrongList.length){
+      if(Math.random()<0.7) return wrongList[Math.floor(Math.random()*wrongList.length)];
+      const nonWrong=Q.filter(q=>!wrong.has(q.id));
+      if(nonWrong.length) return nonWrong[Math.floor(Math.random()*nonWrong.length)];
+    }
+    return Q[Math.floor(Math.random()*Q.length)];
+  }
   function openRandom(){
-    randState={q:Q[Math.floor(Math.random()*Q.length)],selected:null,revealed:false};
+    randState={q:pickRandomQuestion(),selected:null,revealed:false};
     renderRandom();
     $("#modal").classList.add("show");
   }
@@ -1068,7 +1123,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     const favOn=isFav(q.id);
     m.innerHTML=`<button class="modal-close" id="modalClose">✕</button>
       <div class="card-head">
-        <div class="head-badges">${badge("b-subj",q.subjectName)}${q.lecture?badge("b-lect",q.lecture):""}${q.date?badge("b-date",q.date):""}</div>
+        <div class="head-badges">${badge("b-subj",q.subjectName)}${badge("b-zone",zoneName(q.source))}${q.lecture?badge("b-lect",q.lecture):""}${q.date?badge("b-date",q.date):""}</div>
         <div class="head-meta"><span class="b-num">No.${q.num}</span><button class="fav-star${favOn?" on":""}" id="rFav">${favOn?"★":"☆"}</button></div>
       </div>
       <div class="stem">${esc(q.stem)}</div>
@@ -1116,7 +1171,9 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
 
   // ---------- FAV ----------
   function renderFav(m){
-    const list=Q.filter(q=>fav.has(q.id));
+    let list=Q.filter(q=>fav.has(q.id));
+    if(state.subject!=="all") list=list.filter(q=>q.subject===state.subject);
+    if(state.zone!=="all") list=list.filter(q=>q.source===state.zone);
     const wrap=el("div","list");
     if(!list.length){
       wrap.appendChild(el("div","fav-empty",`<div class="big">⭐</div><div>还没有收藏的题目。<br>在任意题目卡片右上角点 ☆ 即可加入收藏～</div>`));
