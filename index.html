@@ -163,7 +163,7 @@
   .badge{font-size:11.5px;font-weight:700;padding:4px 11px;border-radius:999px;letter-spacing:.3px}
   .b-lect{background:var(--accent-soft);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent-hi) 30%,transparent)}
   .b-date{background:var(--surface-3);color:var(--text-3);border:1px solid var(--border)}
-  .b-zone{background:rgba(124,92,255,.12);color:#6d4aff;border:1px solid rgba(124,92,255,.38)}
+  .b-zone{background:rgba(56,116,168,.12);color:#2f6f9e;border:1px solid rgba(56,116,168,.34)}
   /* 收藏区：按科目分组的标题 */
   .fav-group{display:flex;align-items:center;gap:9px;margin:20px 2px 11px;padding-left:13px;
     border-left:3px solid var(--accent);font-weight:700;color:var(--text);font-size:15px}
@@ -426,7 +426,7 @@
     -webkit-backdrop-filter:blur(18px);
   }
   :root[data-theme="dark"] .card:hover{box-shadow:0 12px 48px rgba(0,0,0,.5),0 0 0 1px rgba(215,137,93,.12)}
-  :root[data-theme="dark"] .b-zone{background:rgba(124,92,255,.22);color:#b9a6ff;border-color:rgba(124,92,255,.48)}
+  :root[data-theme="dark"] .b-zone{background:rgba(120,170,210,.18);color:#a9d2ee;border-color:rgba(120,170,210,.40)}
   :root[data-theme="dark"] .btn{
     background:var(--surface-2);
     border-color:rgba(255,255,255,.10);
@@ -627,6 +627,8 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
   const inFav = q => fav.has(q.id);
   // 收藏区：按来源区域统计收藏数
   const favSizeByZone = zoneKey => Q.filter(q=>fav.has(q.id)&&q.source===zoneKey).length;
+  // 错题区：按来源区域统计错题数
+  const wrongSizeByZone = zoneKey => Q.filter(q=>wrong.has(q.id)&&q.source===zoneKey).length;
 
   // ---------- storage ----------
   const LS = {
@@ -694,6 +696,7 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
       if(state.module==="bank" && q.source!=="bank500") return false;
       if(state.module==="wrong" && !wrong.has(q.id)) return false;
       if(state.module==="done" && !prog[q.id]) return false;
+      if(state.module==="wrong" && state.zone!=="all" && q.source!==state.zone) return false;
       if(state.subject!=="all" && q.subject!==state.subject) return false;
       if(state.lecture!=="all" && q.lecture!==state.lecture) return false;
       if(kw){
@@ -795,7 +798,8 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
 
     // subject chips
     const chips=el("div","chips");
-    const allChip=el("button","chip"+(state.subject==="all"?" on":""),"全部");
+    const allLabel = (state.module==="fav"||state.module==="wrong") ? "全部科目" : "全部";
+    const allChip=el("button","chip"+(state.subject==="all"?" on":""),allLabel);
     allChip.onclick=()=>setSubject("all");
     chips.appendChild(allChip);
     SUBJ.forEach(s=>{
@@ -812,14 +816,14 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     });
     c.appendChild(chips);
 
-    // 收藏区：额外提供“来源区域”筛选（每日一题区 / 基础必刷500题区 / 真题区）
-    if(state.module==="fav"){
+    // 收藏区 / 错题区：额外提供“来源区域”筛选（每日一题区 / 基础必刷500题区 / 真题区）
+    if(state.module==="fav" || state.module==="wrong"){
       const zc=el("div","chips zone-chips");
       const zall=el("button","chip"+(state.zone==="all"?" on":""),"全部区域");
       zall.onclick=()=>setZone("all");
       zc.appendChild(zall);
       ZONE.forEach(z=>{
-        const n=favSizeByZone(z.key);
+        const n = state.module==="fav" ? favSizeByZone(z.key) : wrongSizeByZone(z.key);
         if(!n) return;
         const b=el("button","chip"+(state.zone===z.key?" on":""),z.name);
         b.onclick=()=>setZone(z.key);
@@ -868,11 +872,14 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
     state.subject=k; state.lecture="all";
     if(state.view==="practice"){ startPractice(); }
     renderControls(); renderMain();
+    window.scrollTo({top:0,left:0,behavior:"smooth"});
   }
 
   function setZone(k){
     state.zone=k;
+    if(state.view==="practice"){ startPractice(); }
     renderControls(); renderMain();
+    window.scrollTo({top:0,left:0,behavior:"smooth"});
   }
 
   // ---------- render: main ----------
@@ -1225,7 +1232,9 @@ window.QUESTIONS = [{"id":"d_ds_1","source":"daily","subject":"ds","subjectName"
   }
 
   function renderWrong(m){
-    const list=Q.filter(q=>wrong.has(q.id));
+    let list=Q.filter(q=>wrong.has(q.id));
+    if(state.zone!=="all") list=list.filter(q=>q.source===state.zone);
+    if(state.subject!=="all") list=list.filter(q=>q.subject===state.subject);
     const wrap=el("div","list");
     if(!list.length){
       wrap.appendChild(el("div","fav-empty",`<div class="big">📝</div><div>还没有错题。<br>刷题时答错的题目会自动出现在这里～</div>`));
