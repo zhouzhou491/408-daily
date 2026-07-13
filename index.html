@@ -12,12 +12,12 @@
     --border:rgba(255,255,255,.09);
     --border-strong:rgba(255,255,255,.16);
     --text:#eef1f5; --text-2:#b6bfca; --text-3:#79828f;
-    --accent:#d9e0e8; --accent-hi:#ffffff; --accent-soft:rgba(217,224,232,.14);
-    --on-accent:#0c0e11;
+    --accent:#3f9fd6; --accent-hi:#6fbce8; --accent-soft:rgba(63,159,214,.16);
+    --on-accent:#ffffff;
     --correct:#34d399; --correct-bg:rgba(52,211,153,.12);
     --wrong:#f87171; --wrong-bg:rgba(248,113,113,.10);
     --shadow:0 4px 24px rgba(0,0,0,.50);
-    --shadow-hover:0 8px 40px rgba(217,224,232,.10), 0 16px 48px rgba(0,0,0,.55);
+    --shadow-hover:0 8px 40px rgba(63,159,214,.14), 0 16px 48px rgba(0,0,0,.55);
     --blob-o:0;
   }
   :root[data-theme="light"]{
@@ -457,7 +457,7 @@
     backdrop-filter:blur(18px);
     -webkit-backdrop-filter:blur(18px);
   }
-  :root[data-theme="dark"] .card:hover{box-shadow:0 12px 48px rgba(0,0,0,.5),0 0 0 1px rgba(217,224,232,.14)}
+  :root[data-theme="dark"] .card:hover{box-shadow:0 12px 48px rgba(0,0,0,.5),0 0 0 1px rgba(63,159,214,.18)}
   :root[data-theme="dark"] .b-zone{background:rgba(186,196,206,.16);color:#c2ccd6;border-color:rgba(186,196,206,.34)}
   :root[data-theme="dark"] .btn{
     background:var(--surface-2);
@@ -465,10 +465,11 @@
     color:var(--text);
   }
   :root[data-theme="dark"] .btn.primary{
-    background:var(--accent);
+    background:linear-gradient(180deg, var(--accent-hi) 0%, var(--accent) 100%);
     color:var(--on-accent);
     border-color:transparent;
-    box-shadow:0 8px 28px rgba(215,137,93,.25);
+    box-shadow:0 8px 26px rgba(63,159,214,.34), inset 0 1px 0 rgba(255,255,255,.22);
+    font-weight:700;
   }
   :root[data-theme="dark"] .btn:hover{
     background:rgba(255,255,255,.08);
@@ -476,15 +477,18 @@
     color:var(--accent-hi);
   }
   :root[data-theme="dark"] .btn.primary:hover{
-    background:var(--accent-hi);
+    background:linear-gradient(180deg, #85c8f0 0%, #3f9fd6 100%);
     color:var(--on-accent);
+    box-shadow:0 12px 34px rgba(63,159,214,.46), inset 0 1px 0 rgba(255,255,255,.28);
+    transform:translateY(-1px);
   }
+  :root[data-theme="dark"] .btn.primary:active{transform:translateY(0);box-shadow:0 6px 20px rgba(63,159,214,.4)}
   :root[data-theme="dark"] .tab{color:rgba(255,255,255,.5)}
   :root[data-theme="dark"] .tab:hover{color:var(--text)}
   :root[data-theme="dark"] .tab.active{
     background:var(--accent-soft);
     color:var(--accent-hi);
-    box-shadow:inset 0 0 0 1px rgba(215,137,93,.25);
+    box-shadow:inset 0 0 0 1px rgba(63,159,214,.30);
   }
   :root[data-theme="dark"] .icon-btn{
     background:var(--surface-light);
@@ -549,7 +553,7 @@
   .celebrate.show .cmodal{transform:scale(1)}
   .cemoji{font-size:68px;line-height:1;animation:cepop .6s cubic-bezier(.16,1,.3,1) both;
     filter:drop-shadow(0 6px 18px rgba(91,163,232,.35))}
-  :root[data-theme="dark"] .cemoji{filter:drop-shadow(0 6px 18px rgba(217,224,232,.30))}
+  :root[data-theme="dark"] .cemoji{filter:drop-shadow(0 6px 18px rgba(63,159,214,.32))}
   @keyframes cepop{0%{transform:scale(0) rotate(-18deg);opacity:0}60%{transform:scale(1.28)}100%{transform:scale(1)}}
   .ctitle{font-size:27px;font-weight:800;margin-top:16px;color:var(--text);letter-spacing:1px}
   .csub{font-size:15px;color:var(--text-2);margin-top:9px}
@@ -560,7 +564,7 @@
   .confetti.c3{left:70%;background:#FBBF24;animation:cfall 2.1s linear infinite .9s}
   .confetti.c4{left:84%;background:#F472B6;animation:cfall 2.6s linear infinite .3s}
   .confetti.c5{left:32%;background:#A78BFA;animation:cfall 3.1s linear infinite .7s}
-  :root[data-theme="dark"] .confetti.c1{background:#cfd8e3}
+  :root[data-theme="dark"] .confetti.c1{background:#6fbce8}
   :root[data-theme="dark"] .confetti.c2{background:#34D399}
   :root[data-theme="dark"] .confetti.c3{background:#FBBF24}
   :root[data-theme="dark"] .confetti.c4{background:#F472B6}
